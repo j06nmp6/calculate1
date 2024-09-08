@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>售價計算器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label, input, select {
+            margin: 10px 0;
+            display: block;
+        }
+        .result {
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .tab {
+            display: none;
+        }
+        .tab-button {
+            padding: 10px;
+            cursor: pointer;
+            background-color: lightgray;
+            border: 1px solid gray;
+            display: inline-block;
+            margin: 5px;
+        }
+        .active {
+            background-color: darkgray;
+        }
+        .flag-icon {
+            width: 30px;
+            height: 20px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>售價計算器</h1>
+
+    <!-- 分頁選擇 -->
+    <div>
+        <!-- 日本國旗按鈕 -->
+        <span class="tab-button active" onclick="showTab('jp')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/9/9e/Flag_of_Japan.svg" alt="日本國旗" class="flag-icon"> 
+            日貨
+        </span>
+
+        <!-- 美國國旗按鈕 -->
+        <span class="tab-button" onclick="showTab('us')">
+            <img src="https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg" alt="美國國旗" class="flag-icon"> 
+            美貨
+        </span>
+    </div>
+
+    <!-- 日貨計算器 -->
+    <div id="jp" class="tab" style="display:block;">
+        <h2>日貨售價計算器</h2>
+        <label for="yen">商品日幣價格：</label>
+        <input type="number" id="yen" placeholder="輸入日幣價格" />
+
+        <label for="weight">商品重量（克）：</label>
+        <input type="number" id="weight" placeholder="輸入商品重量（克）" />
+
+        <label for="exchangeRate">匯率：</label>
+        <input type="number" id="exchangeRate" value="0.23" step="0.01" />
+
+        <label for="serviceFee">需要服務費嗎？</label>
+        <input type="checkbox" id="serviceFee" />
+
+        <button onclick="calculatePriceJP()">計算售價</button>
+
+        <div class="result" id="resultJP"></div>
+    </div>
+
+    <!-- 美貨計算器 -->
+    <div id="us" class="tab">
+        <h2>美貨售價計算器</h2>
+        <label for="usd">商品美元價格：</label>
+        <input type="number" id="usd" placeholder="輸入美元價格" />
+
+        <label for="weightUS">商品重量（克）：</label>
+        <input type="number" id="weightUS" placeholder="輸入商品重量（克）" />
+
+        <label for="exchangeRateUS">匯率：</label>
+        <input type="number" id="exchangeRateUS" value="33" step="0.01" />
+
+        <label for="taxRateUS">稅率：</label>
+        <select id="taxRateUS">
+            <option value="0">0%</option>
+            <option value="1.05">5%</option>
+            <option value="1.09">9%</option>
+        </select>
+
+        <button onclick="calculatePriceUS()">計算售價</button>
+
+        <div class="result" id="resultUS"></div>
+    </div>
+
+    <script>
+        // 切換分頁
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+            document.getElementById(tab).style.display = 'block';
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+        }
+
+        // 計算日貨價格
+        function calculatePriceJP() {
+            const yen = parseFloat(document.getElementById('yen').value);
+            const weightInGrams = parseFloat(document.getElementById('weight').value);
+            const exchangeRate = parseFloat(document.getElementById('exchangeRate').value);
+            const taxRate = 1.1;        // 稅率固定10%
+            const shippingPerKg = 250;  // 日貨運費每公斤250台幣
+            const serviceFeeChecked = document.getElementById('serviceFee').checked;
+            const handlingFeeRate = serviceFeeChecked ? 0.1 : 0;
+
+            if (isNaN(yen) || isNaN(weightInGrams) || isNaN(exchangeRate)) {
+                alert("請輸入有效的價格、重量和匯率");
+                return;
+            }
+
+            const costInTWD = yen * exchangeRate;
+            const totalCostWithFees = costInTWD * taxRate * (1 + handlingFeeRate);
+            const weightInKg = weightInGrams / 1000;
+            const shippingCost = weightInKg * shippingPerKg;
+            const totalCost = totalCostWithFees + shippingCost;
+
+            const price15 = totalCost * 1.15;
+            const price20 = totalCost * 1.20;
+            const price30 = totalCost * 1.30;
+            const price40 = totalCost * 1.40;
+
+            document.getElementById('resultJP').innerHTML = `
+                <p>總成本 (NTD)：${totalCost.toFixed(2)}</p>
+                <p>15%報酬率售價：${price15.toFixed(2)} NTD</p>
+                <p>20%報酬率售價：${price20.toFixed(2)} NTD</p>
+                <p>30%報酬率售價：${price30.toFixed(2)} NTD</p>
+                <p>40%報酬率售價：${price40.toFixed(2)} NTD</p>
+            `;
+        }
+
+        // 計算美貨價格
+        function calculatePriceUS() {
+            const usd = parseFloat(document.getElementById('usd').value);
+            const weightInGrams = parseFloat(document.getElementById('weightUS').value);
+            const exchangeRate = parseFloat(document.getElementById('exchangeRateUS').value);
+            const taxRate = parseFloat(document.getElementById('taxRateUS').value);
+            const shippingPerKg = 400;  // 美貨運費每公斤400台幣
+
+            if (isNaN(usd) || isNaN(weightInGrams) || isNaN(exchangeRate)) {
+                alert("請輸入有效的價格、重量和匯率");
+                return;
+            }
+
+            const costInTWD = usd * exchangeRate;
+            const totalCostWithFees = costInTWD * taxRate;
+            const weightInKg = weightInGrams / 1000;
+            const shippingCost = weightInKg * shippingPerKg;
+            const totalCost = totalCostWithFees + shippingCost;
+
+            const price15 = totalCost * 1.15;
+            const price20 = totalCost * 1.20;
+            const price30 = totalCost * 1.30;
+            const price40 = totalCost * 1.40;
+
+            document.getElementById('resultUS').innerHTML = `
+                <p>總成本 (NTD)：${totalCost.toFixed(2)}</p>
+                <p>15%報酬率售價：${price15.toFixed(2)} NTD</p>
+                <p>20%報酬率售價：${price20.toFixed(2)} NTD</p>
+                <p>30%報酬率售價：${price30.toFixed(2)} NTD</p>
+                <p>40%報酬率售價：${price40.toFixed(2)} NTD</p>
+            `;
+        }
+    </script>
+</body>
+</html>
